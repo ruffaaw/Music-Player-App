@@ -9,6 +9,15 @@ import {
   FlatList,
   Animated,
 } from 'react-native';
+import TrackPlayer, {
+  Capability,
+  Event,
+  RepeatMode,
+  State,
+  usePlaybackState,
+  useProgress,
+  useTrackPlayerEvents,
+} from 'react-native-track-player';
 import React, {useEffect, useState, useRef} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Slider from '@react-native-community/slider';
@@ -16,13 +25,34 @@ import songs from '../model/Data';
 
 const {width, height} = Dimensions.get('window');
 
-const MusicPlayer = () => {
+const setUpPlayer = async () => {
+  try {
+    await TrackPlayer.setupPlayer();
+    await TrackPlayer.add(songs);
+  } catch (e) {
+    console.log(e);
+  }
+};
 
-  const [songIndex, setSongIndex] = useState(0)
+const togglePayBack = async playBackState => {
+  const currentTrack = await TrackPlayer.getCurrentTrack();
+  if (currentTrack != null) {
+    if (playBackState === State.Paused) {
+      await TrackPlayer.play();
+    } else {
+      await TrackPlayer.pause();
+    }
+  }
+};
+
+const MusicPlayer = () => {
+  const playBackState = usePlaybackState();
+  const [songIndex, setSongIndex] = useState(0);
 
   const scrollX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    setUpPlayer();
     scrollX.addListener(({value}) => {
       // console.log(`ScrollX: ${value} | Device Width: ${width}`);
       const index = Math.round(value / width);
@@ -56,10 +86,10 @@ const MusicPlayer = () => {
           onScroll={Animated.event(
             [
               {
-                nativeEvent : {
+                nativeEvent: {
                   contentOffset: {x: scrollX},
-                } 
-              }
+                },
+              },
             ],
             {useNativeDriver: true},
           )}
@@ -67,7 +97,10 @@ const MusicPlayer = () => {
 
         {/* Song Content */}
         <View>
-          <Text style={[style.songContent, style.songTitle]}> {songs[songIndex].title} </Text>
+          <Text style={[style.songContent, style.songTitle]}>
+            {' '}
+            {songs[songIndex].title}{' '}
+          </Text>
           <Text style={[style.songContent, style.songArtist]}>
             {songs[songIndex].artist}
           </Text>
@@ -96,8 +129,16 @@ const MusicPlayer = () => {
             <Ionicons name="play-skip-back-outline" size={35} color="#FFD369" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => {}}>
-            <Ionicons name="ios-pause-circle" size={75} color="#FFD369" />
+          <TouchableOpacity onPress={() => togglePayBack(playBackState)}>
+            <Ionicons
+              name={
+                playBackState === State.Playing
+                  ? 'ios-pause-circle'
+                  : 'ios-play-circle'
+              }
+              size={75}
+              color="#FFD369"
+            />
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => {}}>
