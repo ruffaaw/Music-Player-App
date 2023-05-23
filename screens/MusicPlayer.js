@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import React from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Slider from '@react-native-community/slider';
 
 const {width, height} = Dimensions.get('window');
 
@@ -30,7 +31,18 @@ const MusicPlayer = () => {
           <Text style={[style.songContent, style.songArtist]}> Some Artist Name </Text>
         </View>
         {/* slider */}
-
+          <View>
+            <Slider
+            style={style.progressBar}
+              value = {10}
+              minimumValue={0}
+              maximumValue={100}
+              thumbTintColor="#FFD369"
+              minimumTrackTintColor="#FFD369"
+              maximumTrackTintColor="#fff"
+              onSlidingComplete = {() => {}}
+            />
+          </View>
         {/* music  controls*/}
       </View>
       <View style={style.bottomContainer}>
@@ -113,4 +125,10 @@ const style = StyleSheet.create({
     fontSize: 16,
     fontWeight: '300',
   },
+  progressBar: {
+      width: 350,
+      height: 40,
+      marginTop: 25,
+      flexDirection: 'row',
+    },
 });
