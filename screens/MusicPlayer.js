@@ -5,18 +5,30 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Dimensions,
+  Image,
 } from 'react-native';
 import React from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 const MusicPlayer = () => {
   return (
     <SafeAreaView style={style.container}>
       <View style={style.maincontainer}>
         {/* image*/}
+        <View style={[style.imageWrapper, style.elevation]}>
+          <Image
+            source={require('../assets/img/img1.jpg')}
+            style={style.musicImage}
+          />
+        </View>
 
+        {/* Song Content */}
+        <View>
+          <Text style={[style.songContent, style.songTitle]}> Some Title </Text>
+          <Text style={[style.songContent, style.songArtist]}> Some Artist Name </Text>
+        </View>
         {/* slider */}
 
         {/* music  controls*/}
@@ -61,11 +73,44 @@ const style = StyleSheet.create({
     paddingVertical: 15,
     borderTopColor: '#393E46',
     borderWidth: 1,
-
   },
   bottomIconWrapper: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '80%',
-  }
+  },
+
+  imageWrapper: {
+    width: 300,
+    height: 340,
+    marginBottom: 25,
+  },
+
+  musicImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 15,
+  },
+
+  elevation: {
+    elevation: 5,
+    shadowOffset: {
+      width: 5,
+      height: 5,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 3.84,
+  },
+  songContent: {
+    textAlign: 'center',
+    color: '#EEEEEE',
+  },
+  songTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  songArtist: {
+    fontSize: 16,
+    fontWeight: '300',
+  },
 });
