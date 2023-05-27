@@ -20,6 +20,7 @@ import TrackPlayer, {
   useTrackPlayerEvents,
 } from 'react-native-track-player';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Slider from '@react-native-community/slider';
 import songs from '../model/Data';
 
@@ -28,6 +29,15 @@ const {width, height} = Dimensions.get('window');
 const setUpPlayer = async () => {
   try {
     await TrackPlayer.setupPlayer();
+    await TrackPlayer.updateOptions({
+      capabilities : [
+        Capability.Play,
+        Capability.Pause,
+        Capability.SkipToNext,
+        Capability.SkipToPrevious,
+        Capability.Stop,
+      ]
+    })
     await TrackPlayer.add(songs);
   } catch (e) {
     console.log(e);
@@ -52,6 +62,7 @@ const MusicPlayer = () => {
   const progress = useProgress();
 
   const [songIndex, setSongIndex] = useState(0);
+  const [repeatMode, setRepeatMode] = useState('off');
   const [trackTitle, setTrackTitle] = useState();
   const [trackArtist, setTrackArtist] = useState();
   const [trackArtWork, setTrackArtWork] = useState();
@@ -70,6 +81,33 @@ const MusicPlayer = () => {
       setTrackArtWork(artwork);
     }
   });
+
+  const repeatIcon = () => {
+    if (repeatMode == 'off') {
+      return 'repeat-off';
+    }
+    if (repeatMode == 'track') {
+      return 'repeat-once';
+    }
+    if (repeatMode == 'repeat') {
+      return 'repeat';
+    }
+  };
+
+  const changeRepeatMode = () => {
+    if (repeatMode == 'off') {
+      TrackPlayer.setRepeatMode(RepeatMode.Track);
+      setRepeatMode('track');
+    }
+    if (repeatMode == 'track') {
+      TrackPlayer.setRepeatMode(RepeatMode.Queue);
+      setRepeatMode('repeat');
+    }
+    if (repeatMode == 'repeat') {
+      TrackPlayer.setRepeatMode(RepeatMode.Off);
+      setRepeatMode('off');
+    }
+  };
 
   const skipTo = async trackId => {
     await TrackPlayer.skip(trackId);
@@ -201,8 +239,12 @@ const MusicPlayer = () => {
             <Ionicons name="heart-outline" size={30} color="#888888" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => {}}>
-            <Ionicons name="repeat" size={30} color="#888888" />
+          <TouchableOpacity onPress={changeRepeatMode}>
+            <MaterialCommunityIcons
+              name={`$repeatIcon()`}
+              size={30}
+              color={repeatMode !== 'off' ? '#FFD369' : '#888888'}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => {}}>
