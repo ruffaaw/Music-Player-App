@@ -1,3 +1,4 @@
+import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -18,7 +19,6 @@ import TrackPlayer, {
   useProgress,
   useTrackPlayerEvents,
 } from 'react-native-track-player';
-import React, {useEffect, useState, useRef} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Slider from '@react-native-community/slider';
 import songs from '../model/Data';
@@ -36,8 +36,10 @@ const setUpPlayer = async () => {
 
 const togglePayBack = async playBackState => {
   const currentTrack = await TrackPlayer.getCurrentTrack();
+  console.log();
+  // console.log(currentTrack, playBackState, State.Playing);
   if (currentTrack != null) {
-    if (playBackState === State.Paused) {
+    if (playBackState == State.Paused) {
       await TrackPlayer.play();
     } else {
       await TrackPlayer.pause();
@@ -47,25 +49,60 @@ const togglePayBack = async playBackState => {
 
 const MusicPlayer = () => {
   const playBackState = usePlaybackState();
-  const [songIndex, setSongIndex] = useState(0);
+  const progress = useProgress();
 
+  const [songIndex, setSongIndex] = useState(0);
+  const [trackTitle, setTrackTitle] = useState();
+  const [trackArtist, setTrackArtist] = useState();
+  const [trackArtWork, setTrackArtWork] = useState();
+
+  // custom references
   const scrollX = useRef(new Animated.Value(0)).current;
+  const songSlider = useRef(null); //Flatlist reference
+
+  //   Changing the track on complete
+  useTrackPlayerEvents([Event.PlaybackTrackChanged], async () => {
+    if (event.type === Event.PlaybackTrackChanged && event.nextTrack !== null) {
+      const track = await TrackPlayer.getTrack(event.nextTrack);
+      const {title, artwork, artist} = track;
+      setTrackTitle(title);
+      setTrackArtist(artist);
+      setTrackArtWork(artwork);
+    }
+  });
+
+  const skipTo = async trackId => {
+    await TrackPlayer.skip(trackId);
+  };
 
   useEffect(() => {
     setUpPlayer();
     scrollX.addListener(({value}) => {
       // console.log(`ScrollX: ${value} | Device Width: ${width}`);
       const index = Math.round(value / width);
+      skipTo(index);
       setSongIndex(index);
       // console.log(index);
     });
   }, []);
 
+  const skipToNext = () => {
+    songSlider.current.scrollToOffset({
+      offset: (songIndex + 1) * width,
+    });
+  };
+
+  const skipToPrevious = () => {
+    songSlider.current.scrollToOffset({
+      offset: (songIndex - 1) * width,
+    });
+  };
+
   const renderSongs = ({item, index}) => {
     return (
       <Animated.View style={style.mainImageWrapper}>
         <View style={[style.imageWrapper, style.elevation]}>
-          <Image source={item.artwork} style={style.musicImage} />
+          <Image source={trackArtWork} style={style.musicImage} />
         </View>
       </Animated.View>
     );
@@ -76,6 +113,7 @@ const MusicPlayer = () => {
       <View style={style.maincontainer}>
         {/* image*/}
         <Animated.FlatList
+          ref={songSlider}
           renderItem={renderSongs}
           data={songs}
           keyExtractor={item => item.id}
@@ -97,35 +135,42 @@ const MusicPlayer = () => {
 
         {/* Song Content */}
         <View>
-          <Text style={[style.songContent, style.songTitle]}>
-            {' '}
-            {songs[songIndex].title}{' '}
-          </Text>
+          <Text style={[style.songContent, style.songTitle]}>{trackTitle}</Text>
           <Text style={[style.songContent, style.songArtist]}>
-            {songs[songIndex].artist}
+            {trackArtWork}
           </Text>
         </View>
         {/* slider */}
         <View>
           <Slider
             style={style.progressBar}
-            value={10}
+            value={progress.position}
             minimumValue={0}
-            maximumValue={100}
+            maximumValue={progress.duration}
             thumbTintColor="#FFD369"
             minimumTrackTintColor="#FFD369"
             maximumTrackTintColor="#fff"
-            onSlidingComplete={() => {}}
+            onSlidingComplete={async value => {
+              await TrackPlayer.seekTo(value);
+            }}
           />
           {/* music progress duration */}
           <View style={style.progressLevelDuration}>
-            <Text style={style.progressLabelText}>00:00</Text>
-            <Text style={style.progressLabelText}>00:00</Text>
+            <Text style={style.progressLabelText}>
+              {new Date(progress.position * 1000)
+                .toLocaleTimeString()
+                .substring(3)}
+            </Text>
+            <Text style={style.progressLabelText}>
+              {new Date((progress.duration - progress.position) * 1000)
+                .toLocaleTimeString()
+                .substring(3)}
+            </Text>
           </View>
         </View>
         {/* music  controls*/}
         <View style={style.musicControlsContainer}>
-          <TouchableOpacity onPress={() => {}}>
+          <TouchableOpacity onPress={skipToPrevious}>
             <Ionicons name="play-skip-back-outline" size={35} color="#FFD369" />
           </TouchableOpacity>
 
@@ -141,7 +186,7 @@ const MusicPlayer = () => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => {}}>
+          <TouchableOpacity onPress={skipToNext}>
             <Ionicons
               name="play-skip-forward-outline"
               size={35}
